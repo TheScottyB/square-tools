@@ -1,0 +1,66 @@
+# Square Tools .gitignore
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+config.local.sh
+
+# API Keys and tokens (security)
+*token*
+*key*
+*secret*
+
+# Data directories
+data/
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# MongoDB dumps
+*.bson
+*.dump
+
+# Photo exports (can be large)
+photo_exports/
+*.heic
+*.jpeg
+*.jpg
+*.png
+!README.md
+
+# Backup files
+*.bak
+*.backup
+*~
