@@ -238,7 +238,7 @@ class SquareCacheMCP:
                 "item_name": change.get('item_name'),
                 "change_type": change.get('change_type'),
                 "timestamp": str(change.get('timestamp')),
-                "differences": list(change.get('differences', {}).keys())
+                "differences": list((change.get('differences') or {}).keys())
             })
         
         return {
