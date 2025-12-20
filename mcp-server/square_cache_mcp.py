@@ -91,8 +91,7 @@ class SquareCacheMCP:
                         },
                         "limit": {
                             "type": "integer",
-                            "description": "Maximum number of changes to return (default 20)",
-                            "default": 20
+                            "description": "Maximum number of changes to return (default: 20 if not specified)"
                         }
                     }
                 }
