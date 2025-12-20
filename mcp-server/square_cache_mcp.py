@@ -26,12 +26,15 @@ class SquareCacheMCP:
     
     def __init__(self):
         self.token = os.environ.get('SQUARE_TOKEN', '')
+        
+        # Always initialize MongoDB connection for read operations
+        self.client = MongoClient('mongodb://localhost:27017/')
+        self.db = self.client['square_cache']
+        
+        # Initialize cache manager if token available (for sync operations)
         if self.token:
             self.cache_manager = SquareCacheManager(self.token)
         else:
-            # Allow read-only operations without token
-            self.client = MongoClient('mongodb://localhost:27017/')
-            self.db = self.client['square_cache']
             self.cache_manager = None
     
     def get_tools(self) -> List[Dict[str, Any]]:
@@ -280,31 +283,99 @@ class SquareCacheMCP:
 
 
 def main():
-    """MCP server main loop"""
+    """MCP server main loop with proper JSON-RPC 2.0 protocol"""
     server = SquareCacheMCP()
     
-    # MCP stdio protocol
+    # MCP stdio protocol (JSON-RPC 2.0)
     for line in sys.stdin:
         try:
             request = json.loads(line)
+            request_id = request.get('id')
             method = request.get('method')
             
-            if method == 'tools/list':
+            if method == 'initialize':
+                # MCP handshake
                 response = {
-                    "tools": server.get_tools()
+                    "jsonrpc": "2.0",
+                    "id": request_id,
+                    "result": {
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {
+                            "tools": {}
+                        },
+                        "serverInfo": {
+                            "name": "square-cache",
+                            "version": "1.0.0"
+                        }
+                    }
+                }
+            elif method == 'tools/list':
+                response = {
+                    "jsonrpc": "2.0",
+                    "id": request_id,
+                    "result": {
+                        "tools": server.get_tools()
+                    }
                 }
             elif method == 'tools/call':
                 tool_name = request['params']['name']
                 arguments = request['params'].get('arguments', {})
-                response = server.handle_tool_call(tool_name, arguments)
+                tool_result = server.handle_tool_call(tool_name, arguments)
+                
+                # Check if tool returned error
+                if "error" in tool_result:
+                    response = {
+                        "jsonrpc": "2.0",
+                        "id": request_id,
+                        "error": {
+                            "code": -32000,
+                            "message": tool_result["error"]
+                        }
+                    }
+                else:
+                    response = {
+                        "jsonrpc": "2.0",
+                        "id": request_id,
+                        "result": {
+                            "content": [{
+                                "type": "text",
+                                "text": json.dumps(tool_result, indent=2)
+                            }]
+                        }
+                    }
             else:
-                response = {"error": f"Unknown method: {method}"}
+                response = {
+                    "jsonrpc": "2.0",
+                    "id": request_id,
+                    "error": {
+                        "code": -32601,
+                        "message": f"Method not found: {method}"
+                    }
+                }
             
             print(json.dumps(response))
             sys.stdout.flush()
             
+        except json.JSONDecodeError as e:
+            error_response = {
+                "jsonrpc": "2.0",
+                "id": None,
+                "error": {
+                    "code": -32700,
+                    "message": f"Parse error: {str(e)}"
+                }
+            }
+            print(json.dumps(error_response))
+            sys.stdout.flush()
         except Exception as e:
-            error_response = {"error": str(e)}
+            error_response = {
+                "jsonrpc": "2.0",
+                "id": request.get('id') if 'request' in locals() else None,
+                "error": {
+                    "code": -32603,
+                    "message": f"Internal error: {str(e)}"
+                }
+            }
             print(json.dumps(error_response))
             sys.stdout.flush()
 
