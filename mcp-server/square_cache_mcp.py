@@ -8,6 +8,7 @@ Exposes MongoDB-cached Square catalog operations as MCP tools for Claude Desktop
 import json
 import sys
 import os
+from datetime import datetime
 from typing import Any, Dict, List
 
 # Add square-tools to path
@@ -186,7 +187,7 @@ class SquareCacheMCP:
         
         item.pop('_id', None)
         item.pop('content_hash', None)
-        return {"item": item}
+        return {"item": self._serialize(item)}
     
     def _status(self) -> Dict[str, Any]:
         """Get cache status"""
@@ -279,6 +280,17 @@ class SquareCacheMCP:
             currency = price_money.get('currency', 'USD')
             return f"${amount/100:.2f} {currency}"
         return 'N/A'
+
+    def _serialize(self, obj: Any) -> Any:
+        """Recursively convert datetime objects to ISO strings for JSON serialization"""
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        elif isinstance(obj, dict):
+            return {k: self._serialize(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self._serialize(i) for i in obj]
+        return obj
+
 
 
 def main():
