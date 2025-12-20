@@ -16,7 +16,7 @@ This system provides:
 ## 📁 Project Structure
 
 ```
-~/square-tools/
+~/Workspace/square-tools/
 ├── bin/
 │   ├── square_cache.sh           # CLI wrapper for cache operations
 │   ├── photos_to_square.sh       # Photos Library → Square uploader
@@ -142,7 +142,7 @@ export GEMINI_API_KEY="your_gemini_api_key"        # For chat & image analysis
 
 ```bash
 # Load configuration (creates directories)
-source ~/square-tools/config.sh
+source ~/Workspace/square-tools/config.sh
 
 # Check system status
 square_cache.sh status
@@ -218,7 +218,7 @@ python3 cache-system/test_bg_removal.py
 
 ```bash
 # Run change tracking demonstration
-~/square-tools/cache-system/demo_change_tracking.sh
+~/Workspace/square-tools/cache-system/demo_change_tracking.sh
 ```
 
 ## 🔄 Change Detection Process

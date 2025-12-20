@@ -4,7 +4,7 @@
 # Usage: ./square_cache.sh <command> [options]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CACHE_MANAGER="$HOME/square-tools/cache-system/square_cache_manager.py"
+CACHE_MANAGER="$HOME/Workspace/square-tools/cache-system/square_cache_manager.py"
 SQUARE_TOKEN="${SQUARE_TOKEN}"
 
 show_help() {

@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 # Add square-tools to path
-sys.path.insert(0, os.path.expanduser('~/square-tools/cache-system'))
+sys.path.insert(0, os.path.expanduser('~/Workspace/square-tools/cache-system'))
 
 try:
     from square_cache_manager import SquareCacheManager
@@ -354,6 +354,9 @@ def main():
                             }]
                         }
                     }
+            elif method == 'notifications/initialized':
+                # Client notification - no response needed
+                continue
             else:
                 response = {
                     "jsonrpc": "2.0",

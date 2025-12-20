@@ -53,7 +53,7 @@ export REMOVEBG_API_KEY="key"
 export GEMINI_API_KEY="key"
 
 # Init
-source ~/square-tools/config.sh
+source ~/Workspace/square-tools/config.sh
 square_cache.sh sync
 ```
 
