@@ -4,7 +4,7 @@
 # ==========================
 
 # Square API Configuration
-export SQUARE_TOKEN="${SQUARE_TOKEN:-YOUR_SQUARE_TOKEN_HERE}"
+export SQUARE_TOKEN="${SQUARE_ACCESS_TOKEN}"
 export SQUARE_ENVIRONMENT="${SQUARE_ENVIRONMENT:-production}"  # or 'sandbox'
 
 # MongoDB Configuration  

@@ -8,8 +8,10 @@ This system provides:
 - **Local MongoDB cache** of all Square catalog items
 - **Change detection** with before/after snapshots
 - **Audit trail** of all modifications
+- **AI-powered image processing** with automated background removal
 - **CLI tools** for easy management
 - **Photo integration** from Photos Library to Square
+- **Gemini AI chat** for image analysis and assistance
 
 ## 📁 Project Structure
 
@@ -18,14 +20,21 @@ This system provides:
 ├── bin/
 │   ├── square_cache.sh           # CLI wrapper for cache operations
 │   ├── photos_to_square.sh       # Photos Library → Square uploader
+│   ├── process_and_upload.sh     # AI-powered photo processing + upload
+│   ├── gemini_chat.sh           # Interactive Gemini chat interface
 │   └── browse_photos.sh          # Photos Library browser
 ├── cache-system/
 │   ├── square_cache_manager.py   # Core MongoDB cache manager
+│   ├── bg_removal_service.py     # Background removal service (Remove.bg, Gemini, Banana)
+│   ├── test_bg_removal.py        # System health checker
 │   └── demo_change_tracking.sh   # Demonstration script
 ├── data/
 │   ├── photo_exports/            # Exported photos directory
 │   └── logs/                     # Application logs
 ├── config.sh                     # Configuration file
+├── IMAGE_PROCESSING.md           # Image processing documentation
+├── QUICKSTART_BG_REMOVAL.md      # Quick start guide
+├── DEMO.md                       # Quick demos and examples
 └── README.md                     # This documentation
 ```
 
@@ -86,6 +95,24 @@ This system provides:
    }
    ```
 
+4. **`bg_removal_cache`** - Processed image cache (AI background removal)
+   ```json
+   {
+     "_id": "ObjectId",
+     "image_hash": "sha256_hash_of_original",
+     "processed_path": "/path/to/processed_image.png",
+     "metadata": {
+       "provider": "remove_bg",
+       "status": "success",
+       "cost": 0.002,
+       "timestamp": "2025-12-20T03:22:00Z",
+       "original_size": 1024000,
+       "processed_size": 512000
+     },
+     "cached_at": "2025-12-20T03:22:00Z"
+   }
+   ```
+
 ## 🚀 Quick Start
 
 ### 1. Prerequisites
@@ -97,13 +124,18 @@ brew install mongodb-community@8.0
 brew services start mongodb-community@8.0
 
 # Install Python dependencies
-pip3 install pymongo requests
+pip3 install pymongo requests Pillow
 ```
 
 ### 2. Set Environment Variables
 
 ```bash
+# Required for Square API
 export SQUARE_TOKEN="YOUR_SQUARE_TOKEN_HERE"
+
+# Optional: For AI background removal (at least one recommended)
+export REMOVEBG_API_KEY="your_remove_bg_api_key"  # Recommended
+export GEMINI_API_KEY="your_gemini_api_key"        # For chat & image analysis
 ```
 
 ### 3. Initial Setup
@@ -157,8 +189,29 @@ browse_photos.sh search "IMG_7232"
 browse_photos.sh random 5
 browse_photos.sh export 27569
 
-# Upload photos to Square
+# Upload photos to Square (basic)
 photos_to_square.sh 27569 "YOUR_SQUARE_TOKEN"
+
+# Process with AI background removal and upload
+process_and_upload.sh 27569 --remove-bg --preview
+process_and_upload.sh 27569 --remove-bg --skip-upload
+process_and_upload.sh 27569 --remove-bg --provider remove_bg
+```
+
+### AI Image Processing
+
+```bash
+# Remove background from image (Python interface)
+python3 cache-system/bg_removal_service.py image.jpg remove_bg
+
+# Chat with Gemini about text
+gemini_chat.sh flash
+
+# Chat with Gemini about an image
+gemini_chat.sh flash image.jpg
+
+# Test system health
+python3 cache-system/test_bg_removal.py
 ```
 
 ### Demo & Testing
