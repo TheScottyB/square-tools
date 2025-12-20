@@ -299,12 +299,26 @@ class SquareCacheManager:
         """Get cached item by ID"""
         return self.items_collection.find_one({"id": item_id})
     
-    def search_cached_items(self, name_pattern: str = None, **filters) -> List[Dict]:
-        """Search cached items with filters"""
+    def search_cached_items(self, name_pattern: str = None, sku_pattern: str = None, **filters) -> List[Dict]:
+        """Search cached items with filters
+        
+        Args:
+            name_pattern: Search by item name (regex)
+            sku_pattern: Search by variation SKU (regex)
+            **filters: Additional MongoDB query filters
+        """
         query = {}
         
-        if name_pattern:
+        if name_pattern and sku_pattern:
+            # Search both name and SKU
+            query["$or"] = [
+                {"item_data.name": {"$regex": name_pattern, "$options": "i"}},
+                {"item_data.variations.item_variation_data.sku": {"$regex": sku_pattern, "$options": "i"}}
+            ]
+        elif name_pattern:
             query["item_data.name"] = {"$regex": name_pattern, "$options": "i"}
+        elif sku_pattern:
+            query["item_data.variations.item_variation_data.sku"] = {"$regex": sku_pattern, "$options": "i"}
             
         for key, value in filters.items():
             query[key] = value
@@ -354,6 +368,7 @@ def main():
     parser.add_argument("--token", required=True, help="Square access token")
     parser.add_argument("--item-id", help="Item ID for item command")
     parser.add_argument("--name", help="Name pattern for search command")
+    parser.add_argument("--sku", help="SKU pattern for search command")
     parser.add_argument("--since", help="Show changes since (YYYY-MM-DD)")
     parser.add_argument("--output", choices=["json", "table"], default="table",
                        help="Output format")
@@ -425,7 +440,7 @@ def main():
                 print(f"Item {args.item_id} not found in cache")
                 
         elif args.command == "search":
-            items = cache_manager.search_cached_items(args.name)
+            items = cache_manager.search_cached_items(name_pattern=args.name, sku_pattern=args.sku)
             
             if args.output == "json":
                 print(json.dumps(items, indent=2, default=str))
@@ -436,8 +451,14 @@ def main():
                     name = item.get('item_data', {}).get('name', 'Unknown')
                     item_id = item.get('id', 'Unknown')
                     updated = item.get('updated_at', 'Unknown')
+                    # Get SKU from first variation if available
+                    sku = 'N/A'
+                    variations = item.get('item_data', {}).get('variations', [])
+                    if variations:
+                        sku = variations[0].get('item_variation_data', {}).get('sku', 'N/A')
                     print(f"📦 {name}")
                     print(f"   ID: {item_id}")
+                    print(f"   SKU: {sku}")
                     print(f"   Updated: {updated}")
                     print()
                     

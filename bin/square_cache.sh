@@ -12,21 +12,26 @@ show_help() {
     echo "======================================"
     echo ""
     echo "Commands:"
-    echo "  sync          - Sync all Square catalog items to MongoDB cache"
-    echo "  changes       - Show recent changes"
-    echo "  report        - Generate detailed change report"
-    echo "  item <ID>     - Get cached item by ID"
-    echo "  search <NAME> - Search items by name pattern"
-    echo "  status        - Show cache status"
+    echo "  sync             - Sync all Square catalog items to MongoDB cache"
+    echo "  changes          - Show recent changes"
+    echo "  report           - Generate detailed change report"
+    echo "  item <ID>        - Get cached item by ID"
+    echo "  search <PATTERN> - Search items by name or SKU pattern"
+    echo "  status           - Show cache status"
     echo ""
-    echo "Options:"
+    echo "Search Options:"
+    echo "  --name <pattern>  - Search by item name"
+    echo "  --sku <pattern>   - Search by SKU"
+    echo ""
+    echo "Other Options:"
     echo "  --since YYYY-MM-DD  - Show changes since date"
     echo "  --json              - Output in JSON format"
     echo ""
     echo "Examples:"
     echo "  ./square_cache.sh sync"
     echo "  ./square_cache.sh changes --since 2025-09-30"
-    echo "  ./square_cache.sh search 'Trading Places'"
+    echo "  ./square_cache.sh search 'Trading Places'  # name search"
+    echo "  ./square_cache.sh search --sku RG-0005     # SKU search"
     echo "  ./square_cache.sh item ANE5SXKQR4JZ6AYEZDO26IMX"
     echo ""
     echo "Environment Variables:"
@@ -114,12 +119,30 @@ main() {
             ;;
         "search")
             check_requirements
-            if [ -z "$1" ]; then
-                echo "❌ Search pattern required"
-                echo "Usage: $0 search <PATTERN>"
-                exit 1
+            # Handle search with optional --name or --sku flags
+            if [ "$1" = "--sku" ]; then
+                if [ -z "$2" ]; then
+                    echo "❌ SKU pattern required"
+                    echo "Usage: $0 search --sku <SKU>"
+                    exit 1
+                fi
+                python3 "$CACHE_MANAGER" search --token "$SQUARE_TOKEN" --sku "$2"
+            elif [ "$1" = "--name" ]; then
+                if [ -z "$2" ]; then
+                    echo "❌ Name pattern required"
+                    echo "Usage: $0 search --name <PATTERN>"
+                    exit 1
+                fi
+                python3 "$CACHE_MANAGER" search --token "$SQUARE_TOKEN" --name "$2"
+            else
+                # Default to name search for backward compatibility
+                if [ -z "$1" ]; then
+                    echo "❌ Search pattern required"
+                    echo "Usage: $0 search <PATTERN> or search --sku <SKU>"
+                    exit 1
+                fi
+                python3 "$CACHE_MANAGER" search --token "$SQUARE_TOKEN" --name "$1"
             fi
-            python3 "$CACHE_MANAGER" search --token "$SQUARE_TOKEN" --name "$1"
             ;;
         "status")
             get_cache_status
