@@ -34,13 +34,39 @@ macOS Photos ──→ Export ──→ Square Upload ──→ Item Association
 - **`change_snapshots`**: Before/after snapshots with field-level differences tracking  
 - **`sync_log`**: Sync operation history with performance metrics and error tracking
 
+## Setup
+
+### Initial Setup
+
+```bash
+# Install MongoDB and Python dependencies
+brew tap mongodb/brew
+brew install mongodb-community@8.0
+brew services start mongodb-community@8.0
+pip3 install pymongo requests
+
+# Set required environment variable
+export SQUARE_TOKEN="your_square_access_token_here"
+
+# Load configuration (creates necessary directories)
+source ~/square-tools/config.sh
+
+# Add bin/ to PATH for easier command access
+export PATH="$HOME/square-tools/bin:$PATH"
+
+# Verify setup
+square_cache.sh status
+
+# Perform initial sync to establish baseline cache
+square_cache.sh sync
+```
+
 ## Development Commands
 
 ### Cache Management
 
 ```bash
-# Load configuration and check system status  
-source ~/square-tools/config.sh
+# Check system status and cache statistics
 square_cache.sh status
 
 # Perform full sync from Square API to MongoDB
@@ -82,6 +108,28 @@ photos_to_square.sh 27569 $SQUARE_TOKEN
 ~/square-tools/cache-system/demo_change_tracking.sh
 ```
 
+### Direct MongoDB Queries
+
+```bash
+# Access MongoDB shell for the square_cache database
+mongosh square_cache
+
+# Count total cached items
+mongosh square_cache --eval "db.catalog_items.countDocuments()"
+
+# View latest sync operation
+mongosh square_cache --eval "db.sync_log.findOne({}, {sort: {timestamp: -1}})"
+
+# View all changes for a specific item
+mongosh square_cache --eval "db.change_snapshots.find({item_id: 'ANE5SXKQR4JZ6AYEZDO26IMX'}).pretty()"
+
+# View recent changes in the last 24 hours
+mongosh square_cache --eval "db.change_snapshots.find({timestamp: {\$gte: new Date(Date.now() - 24*60*60*1000)}}).pretty()"
+
+# Get items with images
+mongosh square_cache --eval "db.catalog_items.find({'item_data.image_ids': {\$exists: true}}).count()"
+```
+
 ## Technical Implementation Details
 
 ### Change Detection Algorithm
@@ -117,36 +165,73 @@ Photos workflow uses AppleScript automation for macOS Photos Library access:
 - **Upload**: Square API v2 catalog/images endpoint with multipart form data
 - **Association**: Image IDs can be attached to catalog items via `item_data.image_ids`
 
-## Configuration Requirements
+## Troubleshooting
 
-### Environment Setup
+### MongoDB Connection Issues
 
 ```bash
-# Required environment variables
+# Check if MongoDB is running
+mongosh --eval "db.runCommand('ismaster')" --quiet
+
+# Start MongoDB service
+brew services start mongodb-community@8.0
+
+# Check MongoDB service status
+brew services list | grep mongodb
+
+# View MongoDB logs
+tail -f /opt/homebrew/var/log/mongodb/mongo.log  # Apple Silicon
+tail -f /usr/local/var/log/mongodb/mongo.log      # Intel Mac
+```
+
+### Square API Issues
+
+```bash
+# Verify Square token is set
+echo $SQUARE_TOKEN
+
+# Test Square API connectivity (requires curl and jq)
+curl -H "Square-Version: 2024-09-18" \
+     -H "Authorization: Bearer $SQUARE_TOKEN" \
+     "https://connect.squareup.com/v2/catalog/list?types=ITEM&limit=1"
+```
+
+### Cache Sync Problems
+
+```bash
+# Check recent sync logs for errors
+mongosh square_cache --eval "db.sync_log.find({error: {\$exists: true}}).sort({timestamp: -1}).limit(5).pretty()"
+
+# Clear cache and resync (nuclear option)
+mongosh square_cache --eval "db.catalog_items.deleteMany({}); db.change_snapshots.deleteMany({}); db.sync_log.deleteMany({})"
+square_cache.sh sync
+```
+
+### Photo Export Issues
+
+```bash
+# Verify Photos Library path
+ls -la "$HOME/Pictures/Photos Library.photoslibrary"
+
+# Check export directory
+ls -la ~/square-tools/data/photo_exports/
+
+# Test AppleScript access to Photos
+osascript -e "tell application \"Photos\" to count media items"
+```
+
+## Environment Variables
+
+```bash
+# Required
 export SQUARE_TOKEN="your_square_access_token_here"
+
+# Optional (defaults provided in config.sh)
 export SQUARE_ENVIRONMENT="production"  # or 'sandbox'
 export MONGO_URI="mongodb://localhost:27017/"
 export MONGO_DATABASE="square_cache"
-```
-
-### Dependencies Installation
-
-```bash
-# Install MongoDB Community Edition
-brew tap mongodb/brew
-brew install mongodb-community@8.0
-brew services start mongodb-community@8.0
-
-# Install Python dependencies
-pip3 install pymongo requests
-```
-
-### System Validation
-
-```bash
-# Verify all components are working
-square_cache.sh status  # Checks MongoDB connection and cache statistics
-mongosh square_cache --eval "db.stats()"  # Verify database access
+export PHOTOS_LIBRARY_PATH="$HOME/Pictures/Photos Library.photoslibrary"
+export SQUARE_LOG_LEVEL="INFO"
 ```
 
 ## Key Implementation Patterns
