@@ -54,6 +54,23 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
 
 Should return JSON with 5 tools listed.
 
+## Zod Validation Errors
+
+**Symptom:** Error message with "invalid_union", "Expected string, received null", "ZodError" in Claude Desktop logs.
+
+**Root Cause:** inputSchema contains fields Claude Desktop doesn't support (like `default`).
+
+**Solution:** This was fixed in commit `3cdd82c`. Update your MCP server:
+
+```bash
+cd ~/square-tools
+git pull origin main
+```
+
+Restart Claude Desktop.
+
+**Why:** Claude Desktop uses Zod for validation and doesn't support JSON Schema's `default` keyword in inputSchema.
+
 ## Other Common Issues
 
 ### MongoDB Not Running
