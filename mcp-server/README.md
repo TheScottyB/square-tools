@@ -1,6 +1,11 @@
 # Square Cache MCP Server
 
-MCP (Model Context Protocol) server that exposes Square catalog cache operations to Claude Desktop.
+MCP (Model Context Protocol) server that exposes Square catalog cache operations to **Claude Desktop app only**.
+
+**Platform Usage:**
+- **Claude Desktop** (macOS app): Use this MCP server
+- **Warp Agent / Claude in IDE**: Use bash commands (`square_cache.sh`)
+- **Claude on Web**: Use Skills documentation as reference
 
 ## What This Enables
 
