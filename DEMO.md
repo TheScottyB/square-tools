@@ -14,8 +14,8 @@ All components are installed and configured:
 
 ```bash
 # Set API keys
-export REMOVEBG_API_KEY="aDuPi7tnoSM6RaHUnDHkHSNe"
-export GEMINI_API_KEY="AIzaSyBzT2TzQaSkuvPdyCsrxl1O0mgzCo_H7FU"
+export REMOVEBG_API_KEY=""
+export GEMINI_API_KEY=""
 
 # Test with Remove.bg
 cd ~/square-tools
@@ -28,7 +28,7 @@ python3 cache-system/bg_removal_service.py ~/tmp/square_upload/image000000.jpeg 
 
 ```bash
 # Interactive text chat with Gemini Flash
-export GEMINI_API_KEY="AIzaSyBzT2TzQaSkuvPdyCsrxl1O0mgzCo_H7FU"
+export GEMINI_API_KEY=""
 gemini_chat.sh flash
 
 # Try prompts like:
@@ -40,8 +40,8 @@ gemini_chat.sh flash
 ### 3. Chat with Gemini About Images
 
 ```bash
-# Analyze an image
-export GEMINI_API_KEY="AIzaSyBzT2TzQaSkuvPdyCsrxl1O0mgzCo_H7FU"
+# Analyze an 
+export GEMINI_API_KEY=""
 gemini_chat.sh flash ~/tmp/square_upload/image000000.jpeg
 
 # It will describe the image, then you can ask:
