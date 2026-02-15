@@ -24,7 +24,7 @@ Claude Desktop uses `/opt/homebrew/bin/python3` (Homebrew Python) which requires
 ```json
 {
   "mcpServers": {
-    "square-cache": {
+    "RGSquareItemCache": {
       "command": "/opt/homebrew/bin/python3",
       "args": ["/Users/scottybe/workspace/square/square-tools/mcp-server/square_cache_mcp.py"],
       "env": {
