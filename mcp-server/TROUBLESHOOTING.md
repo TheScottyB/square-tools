@@ -26,9 +26,9 @@ Claude Desktop uses `/opt/homebrew/bin/python3` (Homebrew Python) which requires
   "mcpServers": {
     "square-cache": {
       "command": "/opt/homebrew/bin/python3",
-      "args": ["/Users/scottybe/square-tools/mcp-server/square_cache_mcp.py"],
+      "args": ["/Users/scottybe/workspace/square/square-tools/mcp-server/square_cache_mcp.py"],
       "env": {
-        "SQUARE_TOKEN": "your_token"
+        "SQUARE_ACCESS_TOKEN": "your_token"
       }
     }
   }
@@ -48,8 +48,8 @@ Claude Desktop uses `/opt/homebrew/bin/python3` (Homebrew Python) which requires
 ```bash
 # Test MCP server with Claude Desktop's Python
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
-  SQUARE_TOKEN=$SQUARE_ACCESS_TOKEN \
-  /opt/homebrew/bin/python3 ~/square-tools/mcp-server/square_cache_mcp.py
+  SQUARE_ACCESS_TOKEN=your_token \
+  /opt/homebrew/bin/python3 ~/workspace/square/square-tools/mcp-server/square_cache_mcp.py
 ```
 
 Should return JSON with 5 tools listed.
@@ -63,7 +63,7 @@ Should return JSON with 5 tools listed.
 **Solution:** This was fixed in commit `3cdd82c`. Update your MCP server:
 
 ```bash
-cd ~/square-tools
+cd ~/workspace/square/square-tools
 git pull origin main
 ```
 
@@ -84,7 +84,7 @@ brew services start mongodb-community@8.0
 
 ### Wrong Token
 
-**Error:** "Sync requires SQUARE_TOKEN" for read-only operations
+**Error:** "Sync requires SQUARE_ACCESS_TOKEN" for read-only operations
 
 **Solution:** Token is optional for search/status/changes. Only sync needs token.
 
@@ -94,7 +94,7 @@ brew services start mongodb-community@8.0
 
 **Solution:**
 ```bash
-chmod +x ~/square-tools/mcp-server/square_cache_mcp.py
+chmod +x ~/workspace/square/square-tools/mcp-server/square_cache_mcp.py
 ```
 
 ### Port Already in Use

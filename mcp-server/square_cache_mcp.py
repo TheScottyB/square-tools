@@ -8,17 +8,50 @@ Exposes MongoDB-cached Square catalog operations as MCP tools for Claude Desktop
 import json
 import sys
 import os
+import io
+import contextlib
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-# Add square-tools to path
-sys.path.insert(0, os.path.expanduser('~/Workspace/square-tools/cache-system'))
+def resolve_cache_system_path() -> Optional[str]:
+    """Resolve square cache-system directory across current and legacy layouts."""
+    candidates = (
+        os.environ.get("SQUARE_CACHE_SYSTEM_PATH"),
+        os.path.expanduser("~/workspace/square/square-tools/cache-system"),
+        os.path.expanduser("~/Workspace/square/square-tools/cache-system"),
+        os.path.expanduser("~/Workspace/square-tools/cache-system"),
+        "/Users/scottybe/workspace/square/square-tools/cache-system",
+    )
+    for raw_path in candidates:
+        if not raw_path:
+            continue
+        path = os.path.expanduser(raw_path)
+        if os.path.isdir(path):
+            return path
+    return None
+
+
+def resolve_square_token() -> str:
+    """Resolve Square token using preferred and legacy environment names."""
+    return os.environ.get("SQUARE_ACCESS_TOKEN") or os.environ.get("SQUARE_TOKEN") or ""
+
+
+cache_system_path = resolve_cache_system_path()
+if cache_system_path:
+    sys.path.insert(0, cache_system_path)
 
 try:
     from square_cache_manager import SquareCacheManager
+except ImportError as e:
+    SquareCacheManager = None
+    SQUARE_CACHE_IMPORT_ERROR = str(e)
+else:
+    SQUARE_CACHE_IMPORT_ERROR = None
+
+try:
     from pymongo import MongoClient
 except ImportError as e:
-    print(f"Error: Missing dependencies - {e}", file=sys.stderr)
+    print(f"Error: Missing pymongo dependency - {e}", file=sys.stderr)
     sys.exit(1)
 
 
@@ -26,14 +59,16 @@ class SquareCacheMCP:
     """MCP Server for Square Cache operations"""
     
     def __init__(self):
-        self.token = os.environ.get('SQUARE_TOKEN', '')
+        self.token = resolve_square_token()
+        self.cache_system_path = cache_system_path
+        self.import_error = SQUARE_CACHE_IMPORT_ERROR
         
         # Always initialize MongoDB connection for read operations
         self.client = MongoClient('mongodb://localhost:27017/')
         self.db = self.client['square_cache']
         
         # Initialize cache manager if token available (for sync operations)
-        if self.token:
+        if self.token and SquareCacheManager:
             self.cache_manager = SquareCacheManager(self.token)
         else:
             self.cache_manager = None
@@ -99,7 +134,7 @@ class SquareCacheMCP:
             },
             {
                 "name": "square_cache_sync",
-                "description": "Trigger full catalog sync from Square API to MongoDB. Detects changes and creates audit snapshots. Requires SQUARE_TOKEN.",
+                "description": "Trigger full catalog sync from Square API to MongoDB. Detects changes and creates audit snapshots. Requires SQUARE_ACCESS_TOKEN (or legacy SQUARE_TOKEN).",
                 "inputSchema": {
                     "type": "object",
                     "properties": {}
@@ -193,9 +228,9 @@ class SquareCacheMCP:
         """Get cache status"""
         try:
             # Test MongoDB connection
-            self.client.admin.command('ismaster')
+            self.client.admin.command('ping')
             mongodb_running = True
-        except:
+        except Exception:
             mongodb_running = False
         
         items_count = self.db['catalog_items'].count_documents({})
@@ -213,7 +248,9 @@ class SquareCacheMCP:
                 "timestamp": str(last_sync['timestamp']) if last_sync else None,
                 "status": "success" if last_sync and not last_sync.get('error') else "error",
                 "items_processed": last_sync.get('total_items', 0) if last_sync else 0
-            } if last_sync else None
+            } if last_sync else None,
+            "sync_enabled": bool(self.cache_manager),
+            "cache_system_path": self.cache_system_path
         }
     
     def _changes(self, args: Dict[str, Any]) -> Dict[str, Any]:
@@ -250,16 +287,23 @@ class SquareCacheMCP:
     def _sync(self) -> Dict[str, Any]:
         """Trigger cache sync"""
         if not self.cache_manager:
-            return {"error": "Sync requires SQUARE_TOKEN environment variable"}
+            if not self.token:
+                return {"error": "Sync requires SQUARE_ACCESS_TOKEN (or legacy SQUARE_TOKEN) environment variable"}
+            if self.import_error:
+                return {"error": f"Sync unavailable: could not import square_cache_manager ({self.import_error})"}
+            return {"error": "Sync unavailable: cache manager not initialized"}
         
         try:
-            result = self.cache_manager.sync_from_square()
+            sync_log = io.StringIO()
+            with contextlib.redirect_stdout(sync_log):
+                result = self.cache_manager.sync_from_square()
             return {
                 "success": True,
                 "items_processed": result.get('total_items'),
                 "changes_detected": result.get('changes_detected'),
                 "created": result.get('created_count'),
-                "updated": result.get('updated_count')
+                "updated": result.get('updated_count'),
+                "sync_log": sync_log.getvalue().strip()
             }
         except Exception as e:
             return {"error": str(e)}

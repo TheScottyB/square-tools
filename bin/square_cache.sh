@@ -4,8 +4,11 @@
 # Usage: ./square_cache.sh <command> [options]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CACHE_MANAGER="$HOME/Workspace/square-tools/cache-system/square_cache_manager.py"
-SQUARE_TOKEN="${SQUARE_TOKEN}"
+CACHE_MANAGER="${SQUARE_CACHE_MANAGER:-$SCRIPT_DIR/../cache-system/square_cache_manager.py}"
+if [ ! -f "$CACHE_MANAGER" ] && [ -f "$HOME/Workspace/square-tools/cache-system/square_cache_manager.py" ]; then
+    CACHE_MANAGER="$HOME/Workspace/square-tools/cache-system/square_cache_manager.py"
+fi
+SQUARE_TOKEN="${SQUARE_ACCESS_TOKEN:-$SQUARE_TOKEN}"
 
 show_help() {
     echo "🗄️  Square Items MongoDB Cache Manager"
@@ -35,12 +38,13 @@ show_help() {
     echo "  ./square_cache.sh item ANE5SXKQR4JZ6AYEZDO26IMX"
     echo ""
     echo "Environment Variables:"
-    echo "  SQUARE_TOKEN - Square API access token (default: set from upload session)"
+    echo "  SQUARE_ACCESS_TOKEN - Square API access token (preferred)"
+    echo "  SQUARE_TOKEN        - Legacy alias"
 }
 
 check_requirements() {
     # Check if MongoDB is running
-    if ! mongosh --eval "db.runCommand('ismaster')" --quiet >/dev/null 2>&1; then
+    if ! mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
         echo "❌ MongoDB is not running. Please start it:"
         echo "   brew services start mongodb-community@8.0"
         exit 1
@@ -54,8 +58,10 @@ check_requirements() {
     
     # Check if Square token is set
     if [ -z "$SQUARE_TOKEN" ]; then
-        echo "❌ SQUARE_TOKEN not set. Please set it:"
-        echo "   export SQUARE_TOKEN='your_token_here'"
+        echo "❌ Square token not set. Please set it:"
+        echo "   export SQUARE_ACCESS_TOKEN='your_token_here'"
+        echo "   # Optional legacy alias:"
+        echo "   export SQUARE_TOKEN=\"\$SQUARE_ACCESS_TOKEN\""
         exit 1
     fi
 }
@@ -66,7 +72,7 @@ get_cache_status() {
     
     # MongoDB status
     echo "🗄️  MongoDB Status:"
-    if mongosh --eval "db.runCommand('ismaster')" --quiet >/dev/null 2>&1; then
+    if mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
         echo "   ✅ Running"
     else
         echo "   ❌ Not running"

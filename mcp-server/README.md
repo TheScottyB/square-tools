@@ -4,6 +4,10 @@ MCP server for Claude Desktop to access Square catalog cache.
 
 **For Claude Desktop only.** Warp Agent uses bash commands (`square_cache.sh`).
 
+This server is intended to run **alongside** the official Square MCP server:
+- Official Square MCP (`Square`) for direct API calls
+- This local `square-cache` MCP for fast Mongo-backed lookups and change history
+
 ## 5 Tools Exposed
 
 1. **search** - Search by name/SKU
@@ -28,9 +32,9 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "square-cache": {
       "command": "/opt/homebrew/bin/python3",
-      "args": ["/Users/scottybe/square-tools/mcp-server/square_cache_mcp.py"],
+      "args": ["/Users/scottybe/workspace/square/square-tools/mcp-server/square_cache_mcp.py"],
       "env": {
-        "SQUARE_TOKEN": "YOUR_TOKEN"
+        "SQUARE_ACCESS_TOKEN": "YOUR_TOKEN"
       }
     }
   }
