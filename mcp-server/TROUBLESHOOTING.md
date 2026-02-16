@@ -4,52 +4,54 @@
 
 **Symptom:** Claude Desktop shows MCP server as "failed" with "Server disconnected" error.
 
-**Root Cause:** Missing Python dependencies (`pymongo`, `requests`) in the Python interpreter used by Claude Desktop.
+**Root Cause:** Local MCP package cannot start or dependencies cannot resolve in the runtime.
 
 ### Solution
 
-Claude Desktop uses `/opt/homebrew/bin/python3` (Homebrew Python) which requires dependencies installed separately from your terminal Python.
+This server is launched via `uvx` from the local `mcp-server` directory.
 
-**Install dependencies:**
+**Verify uvx is installed:**
 ```bash
-/opt/homebrew/bin/pip3 install --break-system-packages pymongo requests
+uv --version
+uvx --version
 ```
 
-**Verify installation:**
+**Verify the local package starts:**
 ```bash
-/opt/homebrew/bin/python3 -c "import pymongo, requests; print('✅ OK')"
+uvx --from ~/workspace/square/square-tools/mcp-server square-cache-mcp
 ```
 
-**Update config to use full path:**
+**Update config to use uvx:**
 ```json
 {
   "mcpServers": {
-    "RGSquareItemCache": {
-      "command": "/opt/homebrew/bin/python3",
-      "args": ["/Users/scottybe/workspace/square/square-tools/mcp-server/square_cache_mcp.py"],
-      "env": {
-        "SQUARE_ACCESS_TOKEN": "your_token"
-      }
+    "square_cache_mcp": {
+      "command": "/Users/scottybe/.config/claude-mcp/bin/start-square-cache-mcp.sh",
+      "args": []
     }
   }
 }
 ```
 
+The launcher script sources `/Users/scottybe/.config/claude-mcp/.env` and executes `uvx --from ... square-cache-mcp`.
+
 **Restart Claude Desktop** (Cmd+Q, then reopen)
 
 ### Why This Happens
 
-- **Terminal Python:** May use pyenv, conda, or system Python with dependencies installed
-- **Claude Desktop Python:** Uses Homebrew Python (`/opt/homebrew/bin/python3`) with separate packages
-- **Solution:** Install dependencies for Homebrew Python specifically
+- `uvx` missing or not on PATH
+- Local package metadata missing/invalid
+- Environment variables missing for sync operations
 
 ### Testing the Fix
 
 ```bash
-# Test MCP server with Claude Desktop's Python
+# Test MCP server with uvx package runtime
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
   SQUARE_ACCESS_TOKEN=your_token \
-  /opt/homebrew/bin/python3 ~/workspace/square/square-tools/mcp-server/square_cache_mcp.py
+  SQUARE_TOKEN=your_token \
+  SQUARE_CACHE_SYSTEM_PATH=~/workspace/square/square-tools/cache-system \
+  uvx --from ~/workspace/square/square-tools/mcp-server square-cache-mcp
 ```
 
 Should return JSON with 5 tools listed.
@@ -88,14 +90,11 @@ brew services start mongodb-community@8.0
 
 **Solution:** Token is optional for search/status/changes. Only sync needs token.
 
-### Permission Denied
+### Package/Build Errors
 
-**Error:** "Permission denied" when executing script
+**Error:** Build/install failure from `uvx --from ...`
 
-**Solution:**
-```bash
-chmod +x ~/workspace/square/square-tools/mcp-server/square_cache_mcp.py
-```
+**Solution:** Ensure `~/workspace/square/square-tools/mcp-server/pyproject.toml` exists and includes required dependencies (`pymongo`, `requests`).
 
 ### Port Already in Use
 

@@ -6,7 +6,7 @@ MCP server for Claude Desktop to access Square catalog cache.
 
 This server is intended to run **alongside** the official Square MCP server:
 - Official Square MCP (`mcp_square_api`) for direct API calls
-- This local `RGSquareItemCache` MCP for fast Mongo-backed lookups and change history
+- This local `square_cache_mcp` MCP for fast Mongo-backed lookups and change history
 
 ## 5 Tools Exposed
 
@@ -18,9 +18,10 @@ This server is intended to run **alongside** the official Square MCP server:
 
 ## Setup
 
-**1. Install dependencies:**
+**1. Install uv/uvx:**
 ```bash
-/opt/homebrew/bin/pip3 install --break-system-packages pymongo requests
+uv --version
+uvx --version
 ```
 
 **2. Configure Claude Desktop:**
@@ -30,20 +31,19 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "RGSquareItemCache": {
-      "command": "/opt/homebrew/bin/python3",
-      "args": ["/Users/scottybe/workspace/square/square-tools/mcp-server/square_cache_mcp.py"],
-      "env": {
-        "SQUARE_ACCESS_TOKEN": "YOUR_TOKEN"
-      }
+    "square_cache_mcp": {
+      "command": "/Users/scottybe/.config/claude-mcp/bin/start-square-cache-mcp.sh",
+      "args": []
     }
   }
 }
 ```
 
+This launcher script sources `/Users/scottybe/.config/claude-mcp/.env`, so secrets stay out of the JSON config.
+
 **3. Restart Claude Desktop** (Cmd+Q, reopen)
 
-**4. Test:** "What RGSquareItemCache tools are available?"
+**4. Test:** "What square_cache_mcp tools are available?"
 
 ## Usage Examples
 

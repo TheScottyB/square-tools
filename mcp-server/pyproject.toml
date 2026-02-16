@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "square-cache-mcp"
+version = "0.1.0"
+description = "Local MCP server for Square catalog cache"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pymongo>=4.0",
+  "requests>=2.31.0",
+]
+
+[project.scripts]
+square-cache-mcp = "square_cache_mcp:main"
+
+[tool.setuptools]
+py-modules = ["square_cache_mcp"]

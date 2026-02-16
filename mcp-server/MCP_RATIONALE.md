@@ -27,7 +27,7 @@ A Python-based MCP server (`square_cache_mcp.py`) that:
 - Connects directly to MongoDB (localhost:27017)
 - Exposes 5 cache operations as MCP tools
 - Implements JSON-RPC 2.0 protocol
-- Handles authentication via SQUARE_TOKEN env var
+- Handles authentication via `SQUARE_ACCESS_TOKEN` (with legacy `SQUARE_TOKEN` fallback)
 - Returns structured JSON responses
 
 ### Architecture
@@ -119,12 +119,13 @@ Square Catalog API
 ```json
 {
   "mcpServers": {
-    "square-cache": {
-      "command": "python3",
-      "args": ["/Users/scottybe/square-tools/mcp-server/square_cache_mcp.py"],
-      "env": {
-        "SQUARE_TOKEN": "your_token_here"
-      }
+    "mcp_square_api": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://mcp.squareup.com/sse"]
+    },
+    "square_cache_mcp": {
+      "command": "/Users/scottybe/.config/claude-mcp/bin/start-square-cache-mcp.sh",
+      "args": []
     }
   }
 }
@@ -150,7 +151,7 @@ echo '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"square_cac
 ### Expected Claude Desktop Usage
 
 **Natural language queries:**
-- "What square-cache tools are available?"
+- "What square_cache_mcp tools are available?"
 - "Check the cache status"
 - "Search cache for Bears items"
 - "Get details for item A55Q4TG7EJ2IJUDIFX3VHVAH"
