@@ -99,7 +99,7 @@ process_and_upload.sh <photo_num> --remove-bg [--preview] [--skip-upload]
 
 ```bash
 # 1. Set environment
-export REMOVEBG_API_KEY="aDuPi7tnoSM6RaHUnDHkHSNe"
+export REMOVEBG_API_KEY="your_removebg_api_key"
 export SQUARE_TOKEN="your_square_token"
 
 # 2. Process image with background removal and preview
@@ -160,7 +160,7 @@ mongosh square_cache --eval "
 ### "No provider available"
 ```bash
 echo $REMOVEBG_API_KEY  # Check if set
-export REMOVEBG_API_KEY="aDuPi7tnoSM6RaHUnDHkHSNe"
+export REMOVEBG_API_KEY="your_removebg_api_key"
 ```
 
 ### Python string errors

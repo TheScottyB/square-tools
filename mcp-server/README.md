@@ -16,6 +16,23 @@ This server is intended to run **alongside** the official Square MCP server:
 4. **changes** - View recent changes
 5. **sync** - Trigger catalog sync
 
+## Runtime Policy
+
+This MCP server enforces runtime preflight checks via:
+
+- `../bin/agent_preflight.sh`
+- `../runtime/operation_policy.json`
+
+Mode expectations:
+
+- Read tools (`search`, `get_item`, `status`, `changes`) are `WEB_SAFE`
+- `sync` is `LOCAL_STANDARD`
+
+Optional environment overrides:
+
+- `SQUARE_RUNTIME_ID` (default: `claude_desktop`)
+- `SQUARE_RUNTIME_MODE` (if set, must be allowed by runtime profile)
+
 ## Setup
 
 **1. Install uv/uvx:**

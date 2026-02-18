@@ -5,6 +5,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CACHE_MANAGER="${SQUARE_CACHE_MANAGER:-$SCRIPT_DIR/../cache-system/square_cache_manager.py}"
+PRE_FLIGHT="${SQUARE_AGENT_PREFLIGHT:-$SCRIPT_DIR/agent_preflight.sh}"
 if [ ! -f "$CACHE_MANAGER" ] && [ -f "$HOME/Workspace/square-tools/cache-system/square_cache_manager.py" ]; then
     CACHE_MANAGER="$HOME/Workspace/square-tools/cache-system/square_cache_manager.py"
 fi
@@ -42,7 +43,24 @@ show_help() {
     echo "  SQUARE_TOKEN        - Legacy alias"
 }
 
+run_preflight() {
+    local operation="$1"
+    local args=(--operation "$operation" --runtime "${SQUARE_RUNTIME_ID:-local_cli}" --quiet)
+    if [ -n "${SQUARE_RUNTIME_MODE:-}" ]; then
+        args+=(--mode "$SQUARE_RUNTIME_MODE")
+    fi
+
+    if [ ! -x "$PRE_FLIGHT" ]; then
+        echo "❌ Preflight script not found or not executable: $PRE_FLIGHT" >&2
+        exit 20
+    fi
+
+    "$PRE_FLIGHT" "${args[@]}"
+}
+
 check_requirements() {
+    local require_token="${1:-true}"
+
     # Check if MongoDB is running
     if ! mongosh --eval "db.runCommand('ping')" --quiet >/dev/null 2>&1; then
         echo "❌ MongoDB is not running. Please start it:"
@@ -56,8 +74,8 @@ check_requirements() {
         exit 1
     fi
     
-    # Check if Square token is set
-    if [ -z "$SQUARE_TOKEN" ]; then
+    # Check if Square token is set (for cache manager commands)
+    if [ "$require_token" = "true" ] && [ -z "$SQUARE_TOKEN" ]; then
         echo "❌ Square token not set. Please set it:"
         echo "   export SQUARE_ACCESS_TOKEN='your_token_here'"
         echo "   # Optional legacy alias:"
@@ -102,20 +120,24 @@ main() {
     
     case "$command" in
         "sync")
+            run_preflight "square_cache_sync" || exit $?
             check_requirements
             echo "🔄 Starting Square catalog sync..."
             python3 "$CACHE_MANAGER" sync --token "$SQUARE_TOKEN" "$@"
             ;;
         "changes")
-            check_requirements
+            run_preflight "square_cache_read" || exit $?
+            check_requirements false
             python3 "$CACHE_MANAGER" changes --token "$SQUARE_TOKEN" "$@"
             ;;
         "report")
-            check_requirements
+            run_preflight "square_cache_read" || exit $?
+            check_requirements false
             python3 "$CACHE_MANAGER" report --token "$SQUARE_TOKEN" "$@"
             ;;
         "item")
-            check_requirements
+            run_preflight "square_cache_read" || exit $?
+            check_requirements false
             if [ -z "$1" ]; then
                 echo "❌ Item ID required"
                 echo "Usage: $0 item <ITEM_ID>"
@@ -124,7 +146,8 @@ main() {
             python3 "$CACHE_MANAGER" item --token "$SQUARE_TOKEN" --item-id "$1"
             ;;
         "search")
-            check_requirements
+            run_preflight "square_cache_read" || exit $?
+            check_requirements false
             # Handle search with optional --name or --sku flags
             if [ "$1" = "--sku" ]; then
                 if [ -z "$2" ]; then
@@ -151,6 +174,7 @@ main() {
             fi
             ;;
         "status")
+            run_preflight "square_cache_status" || exit $?
             get_cache_status
             ;;
         "help"|"-h"|"--help"|"")

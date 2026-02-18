@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "profiles": [
+    {
+      "id": "codex_desktop",
+      "description": "Codex desktop app runtime on macOS with local automation support.",
+      "default_mode": "LOCAL_PRIVILEGED",
+      "allowed_modes": [
+        "WEB_SAFE",
+        "LOCAL_STANDARD",
+        "LOCAL_PRIVILEGED"
+      ]
+    },
+    {
+      "id": "claude_desktop",
+      "description": "Claude desktop app runtime on macOS with local automation support.",
+      "default_mode": "LOCAL_PRIVILEGED",
+      "allowed_modes": [
+        "WEB_SAFE",
+        "LOCAL_STANDARD",
+        "LOCAL_PRIVILEGED"
+      ]
+    },
+    {
+      "id": "local_cli",
+      "description": "Interactive local CLI runtime.",
+      "default_mode": "LOCAL_STANDARD",
+      "allowed_modes": [
+        "WEB_SAFE",
+        "LOCAL_STANDARD",
+        "LOCAL_PRIVILEGED"
+      ]
+    },
+    {
+      "id": "web_agent",
+      "description": "Remote web-hosted agent runtime with no local privileged access.",
+      "default_mode": "WEB_SAFE",
+      "allowed_modes": [
+        "WEB_SAFE"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "version": "1.0",
+  "operations": [
+    {
+      "operation": "square_cache_status",
+      "required_mode": "WEB_SAFE",
+      "required_capabilities": [
+        "mcp_local_tools"
+      ],
+      "deny_reason": "Cache status requires local Mongo-backed tooling access."
+    },
+    {
+      "operation": "square_cache_read",
+      "required_mode": "WEB_SAFE",
+      "required_capabilities": [
+        "mcp_local_tools"
+      ],
+      "deny_reason": "Cache read operations require local Mongo-backed tooling access."
+    },
+    {
+      "operation": "square_cache_sync",
+      "required_mode": "LOCAL_STANDARD",
+      "required_capabilities": [
+        "mcp_local_tools",
+        "network_access"
+      ],
+      "deny_reason": "Cache sync mutates local cache and calls Square API."
+    },
+    {
+      "operation": "square_cache_mcp_read",
+      "required_mode": "WEB_SAFE",
+      "required_capabilities": [
+        "mcp_local_tools"
+      ],
+      "deny_reason": "MCP cache reads require local cache tooling access."
+    },
+    {
+      "operation": "square_cache_mcp_sync",
+      "required_mode": "LOCAL_STANDARD",
+      "required_capabilities": [
+        "mcp_local_tools",
+        "network_access"
+      ],
+      "deny_reason": "MCP cache sync mutates local cache and calls Square API."
+    },
+    {
+      "operation": "browse_photos",
+      "required_mode": "LOCAL_PRIVILEGED",
+      "required_capabilities": [
+        "filesystem_full_access",
+        "photos_full_access"
+      ],
+      "deny_reason": "Photos browsing requires macOS Photos and full local file access."
+    },
+    {
+      "operation": "photos_to_square_upload",
+      "required_mode": "LOCAL_PRIVILEGED",
+      "required_capabilities": [
+        "filesystem_full_access",
+        "photos_full_access",
+        "network_access"
+      ],
+      "deny_reason": "Photos export + upload requires local Photos access and Square API access."
+    },
+    {
+      "operation": "process_and_upload",
+      "required_mode": "LOCAL_PRIVILEGED",
+      "required_capabilities": [
+        "filesystem_full_access",
+        "photos_full_access",
+        "network_access"
+      ],
+      "deny_reason": "Background removal and upload requires local Photos/media and network access."
+    },
+    {
+      "operation": "chrome_execute_script",
+      "required_mode": "LOCAL_PRIVILEGED",
+      "required_capabilities": [
+        "chrome_control",
+        "js_injection"
+      ],
+      "deny_reason": "JavaScript injection is restricted to privileged local runtime."
+    },
+    {
+      "operation": "chrome_insert_css",
+      "required_mode": "LOCAL_STANDARD",
+      "required_capabilities": [
+        "chrome_control"
+      ],
+      "deny_reason": "CSS insertion requires local Chrome control capability."
+    }
+  ]
+}

@@ -3,6 +3,23 @@
 # Photos to Square Uploader
 # Usage: ./photos_to_square.sh [photo_number] [square_token]
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PRE_FLIGHT="${SQUARE_AGENT_PREFLIGHT:-$SCRIPT_DIR/agent_preflight.sh}"
+
+run_preflight() {
+    local args=(--operation "photos_to_square_upload" --runtime "${SQUARE_RUNTIME_ID:-local_cli}" --quiet)
+    if [ -n "${SQUARE_RUNTIME_MODE:-}" ]; then
+        args+=(--mode "$SQUARE_RUNTIME_MODE")
+    fi
+
+    if [ ! -x "$PRE_FLIGHT" ]; then
+        echo "❌ Preflight script not found or not executable: $PRE_FLIGHT" >&2
+        exit 20
+    fi
+
+    "$PRE_FLIGHT" "${args[@]}"
+}
+
 export_photo_from_library() {
     local photo_index=${1:-1}
     local export_dir="$HOME/tmp/square_upload"
@@ -83,6 +100,8 @@ upload_to_square() {
 
 # Main execution
 main() {
+    run_preflight || exit $?
+
     local photo_num=${1:-1}
     local square_token="$2"
     

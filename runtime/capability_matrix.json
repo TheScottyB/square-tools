@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "modes": {
+    "WEB_SAFE": {
+      "description": "Web-compatible mode with no local privileged operations.",
+      "capabilities": {
+        "filesystem_full_access": false,
+        "photos_full_access": false,
+        "chrome_control": false,
+        "js_injection": false,
+        "mcp_local_tools": true,
+        "network_access": true
+      }
+    },
+    "LOCAL_STANDARD": {
+      "description": "Local mode with filesystem/network access but no photos or JS injection.",
+      "capabilities": {
+        "filesystem_full_access": true,
+        "photos_full_access": false,
+        "chrome_control": true,
+        "js_injection": false,
+        "mcp_local_tools": true,
+        "network_access": true
+      }
+    },
+    "LOCAL_PRIVILEGED": {
+      "description": "Local privileged mode with full toolchain and automation access.",
+      "capabilities": {
+        "filesystem_full_access": true,
+        "photos_full_access": true,
+        "chrome_control": true,
+        "js_injection": true,
+        "mcp_local_tools": true,
+        "network_access": true
+      }
+    }
+  }
+}

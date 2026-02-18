@@ -115,6 +115,20 @@ This system provides:
 
 ## 🚀 Quick Start
 
+### Runtime Policy Note
+
+Privileged operations are gated by runtime policy:
+
+- `runtime/capability_matrix.json`
+- `runtime/operation_policy.json`
+- `bin/agent_preflight.sh`
+
+Example:
+
+```bash
+bin/agent_preflight.sh --operation square_cache_sync --runtime "${SQUARE_RUNTIME_ID:-local_cli}"
+```
+
 ### 1. Prerequisites
 
 ```bash
@@ -136,6 +150,14 @@ export SQUARE_TOKEN="YOUR_SQUARE_TOKEN_HERE"
 # Optional: For AI background removal (at least one recommended)
 export REMOVEBG_API_KEY="your_remove_bg_api_key"  # Recommended
 export GEMINI_API_KEY="your_gemini_api_key"        # For chat & image analysis
+```
+
+### 2.5 Security Gate
+
+Run secret scanning before commit/release:
+
+```bash
+./bin/secret_scan.sh
 ```
 
 ### 3. Initial Setup

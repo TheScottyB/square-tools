@@ -28,6 +28,22 @@ photos_to_square.sh INDEX $SQUARE_TOKEN
 mongosh square_cache
 ```
 
+## Runtime Preflight (Policy Gate)
+
+Before privileged operations, use:
+
+```bash
+bin/agent_preflight.sh --operation <operation_id> --runtime "${SQUARE_RUNTIME_ID:-local_cli}"
+```
+
+Common operations:
+
+- `square_cache_read`
+- `square_cache_sync`
+- `browse_photos`
+- `photos_to_square_upload`
+- `process_and_upload`
+
 ## File Structure
 
 ```
@@ -112,3 +128,5 @@ square_cache.sh sync
 - `README.md` - Full system overview
 - `IMAGE_PROCESSING.md` - AI background removal
 - `mcp-server/` - Claude Desktop integration docs
+- `docs/TOOL_SURFACE_MATRIX.md` - runtime capability mapping
+- `SECURITY.md` - token handling and scanning policy

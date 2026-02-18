@@ -14,6 +14,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CACHE_SYSTEM_DIR="$(dirname "$SCRIPT_DIR")/cache-system"
 EXPORT_DIR="${EXPORT_DIR:-$HOME/tmp/square_upload}"
 PROCESSED_DIR="${PROCESSED_DIR:-$HOME/tmp/square_processed}"
+PRE_FLIGHT="${SQUARE_AGENT_PREFLIGHT:-$SCRIPT_DIR/agent_preflight.sh}"
 
 # Create directories
 mkdir -p "$EXPORT_DIR" "$PROCESSED_DIR"
@@ -26,6 +27,20 @@ PROVIDER="auto"
 USE_CACHE=true
 PHOTO_NUM=""
 SQUARE_TOKEN="${SQUARE_TOKEN:-}"
+
+run_preflight() {
+    local args=(--operation "process_and_upload" --runtime "${SQUARE_RUNTIME_ID:-local_cli}" --quiet)
+    if [ -n "${SQUARE_RUNTIME_MODE:-}" ]; then
+        args+=(--mode "$SQUARE_RUNTIME_MODE")
+    fi
+
+    if [ ! -x "$PRE_FLIGHT" ]; then
+        echo "❌ Preflight script not found or not executable: $PRE_FLIGHT" >&2
+        exit 20
+    fi
+
+    "$PRE_FLIGHT" "${args[@]}"
+}
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -271,6 +286,8 @@ upload_to_square() {
 
 # Main execution
 main() {
+    run_preflight
+
     echo "📸 Photos to Square - Enhanced with AI Processing"
     echo "=================================================="
     echo ""

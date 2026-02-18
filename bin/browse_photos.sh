@@ -3,6 +3,23 @@
 # Photos Library Browser
 # Usage: ./browse_photos.sh [command] [options]
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PRE_FLIGHT="${SQUARE_AGENT_PREFLIGHT:-$SCRIPT_DIR/agent_preflight.sh}"
+
+run_preflight() {
+    local args=(--operation "browse_photos" --runtime "${SQUARE_RUNTIME_ID:-local_cli}" --quiet)
+    if [ -n "${SQUARE_RUNTIME_MODE:-}" ]; then
+        args+=(--mode "$SQUARE_RUNTIME_MODE")
+    fi
+
+    if [ ! -x "$PRE_FLIGHT" ]; then
+        echo "❌ Preflight script not found or not executable: $PRE_FLIGHT" >&2
+        exit 20
+    fi
+
+    "$PRE_FLIGHT" "${args[@]}"
+}
+
 show_help() {
     echo "📸 Photos Library Browser"
     echo "=========================="
@@ -131,9 +148,11 @@ export_photo() {
 # Main execution
 case "$1" in
     "recent")
+        run_preflight || exit $?
         show_recent_photos "$2"
         ;;
     "search")
+        run_preflight || exit $?
         if [ -z "$2" ]; then
             echo "❌ Search term required"
             echo "Usage: $0 search \"search term\""
@@ -142,9 +161,11 @@ case "$1" in
         search_photos "$2"
         ;;
     "random")
+        run_preflight || exit $?
         show_random_photos "$2"
         ;;
     "info")
+        run_preflight || exit $?
         if [ -z "$2" ]; then
             echo "❌ Photo number required"
             echo "Usage: $0 info NUMBER"
@@ -155,6 +176,7 @@ case "$1" in
         get_photo_info "$2"
         ;;
     "export")
+        run_preflight || exit $?
         if [ -z "$2" ]; then
             echo "❌ Photo number required"
             echo "Usage: $0 export NUMBER"

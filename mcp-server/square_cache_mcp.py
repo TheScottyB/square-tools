@@ -9,6 +9,7 @@ import json
 import sys
 import os
 import io
+import subprocess
 import contextlib
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -62,6 +63,10 @@ class SquareCacheMCP:
         self.token = resolve_square_token()
         self.cache_system_path = cache_system_path
         self.import_error = SQUARE_CACHE_IMPORT_ERROR
+        self.preflight_script = os.environ.get(
+            "SQUARE_AGENT_PREFLIGHT",
+            os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "bin", "agent_preflight.sh")),
+        )
         
         # Always initialize MongoDB connection for read operations
         self.client = MongoClient('mongodb://localhost:27017/')
@@ -72,6 +77,27 @@ class SquareCacheMCP:
             self.cache_manager = SquareCacheManager(self.token)
         else:
             self.cache_manager = None
+
+    def _run_preflight(self, operation: str) -> Optional[str]:
+        """Run runtime preflight policy for an operation. Returns error string when denied."""
+        if not os.path.isfile(self.preflight_script):
+            return f"Preflight script missing: {self.preflight_script}"
+
+        runtime_id = os.environ.get("SQUARE_RUNTIME_ID", "claude_desktop")
+        mode = os.environ.get("SQUARE_RUNTIME_MODE", "")
+
+        cmd = [self.preflight_script, "--operation", operation, "--runtime", runtime_id, "--quiet"]
+        if mode:
+            cmd.extend(["--mode", mode])
+
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode != 0:
+            detail = (proc.stderr or proc.stdout or "").strip()
+            return (
+                f"Runtime preflight denied for operation '{operation}' "
+                f"(exit {proc.returncode}): {detail}"
+            )
+        return None
     
     def get_tools(self) -> List[Dict[str, Any]]:
         """Return list of available MCP tools"""
@@ -162,6 +188,10 @@ class SquareCacheMCP:
     
     def _search(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Search cached items"""
+        preflight_error = self._run_preflight("square_cache_mcp_read")
+        if preflight_error:
+            return {"error": preflight_error}
+
         name_pattern = args.get('name_pattern')
         sku_pattern = args.get('sku_pattern')
         
@@ -208,6 +238,10 @@ class SquareCacheMCP:
     
     def _get_item(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Get item by ID"""
+        preflight_error = self._run_preflight("square_cache_mcp_read")
+        if preflight_error:
+            return {"error": preflight_error}
+
         item_id = args.get('item_id')
         if not item_id:
             return {"error": "item_id required"}
@@ -226,6 +260,10 @@ class SquareCacheMCP:
     
     def _status(self) -> Dict[str, Any]:
         """Get cache status"""
+        preflight_error = self._run_preflight("square_cache_mcp_read")
+        if preflight_error:
+            return {"error": preflight_error}
+
         try:
             # Test MongoDB connection
             self.client.admin.command('ping')
@@ -255,6 +293,10 @@ class SquareCacheMCP:
     
     def _changes(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Get recent changes"""
+        preflight_error = self._run_preflight("square_cache_mcp_read")
+        if preflight_error:
+            return {"error": preflight_error}
+
         since = args.get('since')
         limit = args.get('limit', 20)
         
@@ -286,6 +328,10 @@ class SquareCacheMCP:
     
     def _sync(self) -> Dict[str, Any]:
         """Trigger cache sync"""
+        preflight_error = self._run_preflight("square_cache_mcp_sync")
+        if preflight_error:
+            return {"error": preflight_error}
+
         if not self.cache_manager:
             if not self.token:
                 return {"error": "Sync requires SQUARE_ACCESS_TOKEN (or legacy SQUARE_TOKEN) environment variable"}
